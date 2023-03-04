@@ -27,6 +27,7 @@ public class Adoptive {
     private Set<Hamster> adoptedHamsters = new HashSet<>();
 
     public Adoptive(){}
+
     public Adoptive(String name, String idNumber, LocalDate dateOfBirth, String birthplace, String nameOfMother, String address) {
         this.name = name;
         this.idNumber = idNumber;
@@ -34,6 +35,17 @@ public class Adoptive {
         this.birthplace = birthplace;
         this.nameOfMother = nameOfMother;
         this.address = address;
+    }
+
+    public Adoptive(String name, String idNumber, LocalDate dateOfBirth, String birthplace, String nameOfMother, String address, String email, String phoneNumber) {
+        this.name = name;
+        this.idNumber = idNumber;
+        this.dateOfBirth = dateOfBirth;
+        this.birthplace = birthplace;
+        this.nameOfMother = nameOfMother;
+        this.address = address;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
     }
 
     public void addHamsterToAdopted(Hamster hamster) {

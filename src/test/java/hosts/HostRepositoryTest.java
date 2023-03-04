@@ -3,21 +3,17 @@ package hosts;
 import hamsters.Hamster;
 import hamsters.HamsterRepository;
 import hamsters.Species;
-import hamsters.Status;
+import hamsters.HamsterStatus;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
-import jdk.jfr.SettingDescriptor;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
+
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 
 class HostRepositoryTest {
 
@@ -39,6 +35,7 @@ class HostRepositoryTest {
     }
 
     @Test
+    @DisplayName("Save host")
     void testSaveHost() {
         Host host = hostRepository.saveHost(new Host("Megyek Elemér", "Budapest", 2));
 
@@ -46,6 +43,22 @@ class HostRepositoryTest {
     }
 
     @Test
+    @DisplayName("Update host status")
+    void testUpdateHostStatus() {
+        Host host = hostRepository.saveHost(new Host("Megyek Elemér", "Budapest", 2));
+        assertThat(host.getStatus()).isEqualTo(HostStatus.ACTIVE);
+        assertThat(host.getCapacity()).isEqualTo(2);
+
+        host = hostRepository.updateHostStatus(host.getId(), HostStatus.NON_ACTIVE);
+        assertThat(host.getStatus())
+                .isNotEqualByComparingTo(HostStatus.ACTIVE)
+                .isEqualTo(HostStatus.NON_ACTIVE);
+        assertThat(host.getCapacity()).isEqualTo(0);
+
+    }
+
+    @Test
+    @DisplayName("Find host by ID")
     void testFindHostById() {
         Host host = hostRepository.saveHost(new Host("Megyek Elemér", "Budapest", 2));
         long id = host.getId();
@@ -55,6 +68,7 @@ class HostRepositoryTest {
     }
 
     @Test
+    @DisplayName("Find host by name")
     void testFindHostByName() {
         Host host = hostRepository.saveHost(new Host("Megyek Elemér", "Budapest", 2));
 
@@ -64,26 +78,29 @@ class HostRepositoryTest {
     }
 
     @Test
+    @DisplayName("Find host by ID with hamsters' list")
     void testFindHostByWithHamsters() {
         Host host = new Host("Megyek Elemér", "Budapest 18.");
         hostRepository.saveHost(host);
-        Assertions.assertThat(host.getId()).isNotNull();
+        assertThat(host.getId()).isNotNull();
 
         Hamster hamster = new Hamster(
-                "TestHamster", Species.DWARF, "vadas", LocalDate.parse("2022-12-10"),"Budapest 18.",
-                Status.ADOPTABLE, "Keresi új lakhelyét....", host, LocalDate.parse("2023-02-28"));
+                "TestHamster", Species.DWARF, "vadas", LocalDate.parse("2022-12-10"),
+                HamsterStatus.ADOPTABLE, "Keresi új lakhelyét....", host, LocalDate.parse("2023-02-28"));
         hamsterRepository.saveHamster(hamster);
-        Assertions.assertThat(hamster.getId()).isNotNull();
+        assertThat(hamster.getId()).isNotNull();
 
-        hostRepository.saveHamsterToHost(hamster.getId(), host.getId());
+        hamsterRepository.saveHamsterToHost(hamster.getId(), host.getId());
 
-        Host actual = hostRepository.findHostByIdWithHamsters(host.getId());
-        Assertions.assertThat(actual.getCaredHamsters())
+        Set<Hamster> hamsters = hostRepository.findHostWithAllHamsters(host.getId());
+        assertThat(hamsters)
                 .hasSize(1);
+
 
     }
 
     @Test
+    @DisplayName("List of hosts by location")
     void testFindHostsByLocation() {
         Host first = new Host("Megyek Elemér", "Budapest", 3);
         Host second = new Host("Cserepes Virág", "Szeged",2);
@@ -102,21 +119,22 @@ class HostRepositoryTest {
     }
 
     @Test
+    @DisplayName("List of hosts with hamsters in care")
     void testFindHostsByLocationWithHamster() {
         Host first = new Host("Megyek Elemér", "Budapest", 3);
         Host second = new Host("Cserepes Virág", "Szeged",2);
         hostRepository.saveHost(first);
         hostRepository.saveHost(second);
-        Hamster hamster = new Hamster("TestHamsterOne", Species.GOLDEN, "dove", LocalDate.parse("2022-10-10"), Status.ADOPTABLE);
+        Hamster hamster = new Hamster("TestHamsterOne", Species.GOLDEN, "dove", LocalDate.parse("2022-10-10"), HamsterStatus.ADOPTABLE);
         hamsterRepository.saveHamster(hamster);
-        Hamster hamster2 = new Hamster("TestHamsterTwo", Species.GOLDEN, "dove", LocalDate.parse("2022-10-10"), Status.ADOPTABLE);
+        Hamster hamster2 = new Hamster("TestHamsterTwo", Species.GOLDEN, "dove", LocalDate.parse("2022-10-10"), HamsterStatus.ADOPTABLE);
         hamsterRepository.saveHamster(hamster2);
-        Hamster hamster3 = new Hamster("TestHamsterThree", Species.GOLDEN, "dove", LocalDate.parse("2022-10-10"), Status.ADOPTABLE);
+        Hamster hamster3 = new Hamster("TestHamsterThree", Species.GOLDEN, "dove", LocalDate.parse("2022-10-10"), HamsterStatus.ADOPTABLE);
         hamsterRepository.saveHamster(hamster3);
 
-        hostRepository.saveHamsterToHost(hamster.getId(), first.getId());
-        hostRepository.saveHamsterToHost(hamster2.getId(), first.getId());
-        hostRepository.saveHamsterToHost(hamster3.getId(), second.getId());
+        hamsterRepository.saveHamsterToHost(hamster.getId(), first.getId());
+        hamsterRepository.saveHamsterToHost(hamster2.getId(), first.getId());
+        hamsterRepository.saveHamsterToHost(hamster3.getId(), second.getId());
 
 
         Set<Host> result = hostRepository.findHostsByLocation("Budapest");
@@ -124,5 +142,38 @@ class HostRepositoryTest {
                 .hasSize(1);
 
     }
+
+    @Test
+    @DisplayName("List of actual hamsters in care")
+    void testFindHostWithActualHamsters() {
+        Host host = new Host("Megyek Elemér", "Budapest", 3);
+        hostRepository.saveHost(host);
+        Hamster hamster = hamsterRepository.saveHamster(
+                new Hamster("TestHamsterOne", Species.GOLDEN, "dove", LocalDate.parse("2022-10-10"), HamsterStatus.ADOPTABLE));
+        Hamster hamster2 = hamsterRepository.saveHamster(
+                new Hamster("TestHamsterTwo", Species.GOLDEN, "dove", LocalDate.parse("2022-10-10"), HamsterStatus.PERMANENTLY_CARED_FOR));
+        Hamster hamster3 = hamsterRepository.saveHamster(
+                new Hamster("TestHamsterThree", Species.GOLDEN, "dove", LocalDate.parse("2022-10-10"), HamsterStatus.UNDER_MEDICAL_TREATMENT));
+        Hamster hamster4 = hamsterRepository.saveHamster(
+                new Hamster("TestHamsterThree", Species.GOLDEN, "dove", LocalDate.parse("2019-10-10"), HamsterStatus.DECEASED));
+        Hamster hamster5 = hamsterRepository.saveHamster(
+                new Hamster("TestHamsterThree", Species.GOLDEN, "dove", LocalDate.parse("2019-10-10"), HamsterStatus.ADOPTED));
+
+        hamsterRepository.saveHamsterToHost(hamster.getId(), host.getId());
+        hamsterRepository.saveHamsterToHost(hamster2.getId(), host.getId());
+        hamsterRepository.saveHamsterToHost(hamster3.getId(), host.getId());
+        hamsterRepository.saveHamsterToHost(hamster4.getId(), host.getId());
+        hamsterRepository.saveHamsterToHost(hamster5.getId(), host.getId());
+
+        Set<Hamster> all = hostRepository.findHostWithAllHamsters(host.getId());
+        assertThat(all)
+                .hasSize(5);
+        Set<Hamster> result = hostRepository.findHostWithActualHamsters(host.getId());
+        assertThat(result)
+                .hasSize(3)
+                .extracting(Hamster::getStatus)
+                .doesNotContain(HamsterStatus.DECEASED);
+    }
+
 
 }

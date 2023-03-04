@@ -1,6 +1,6 @@
 package hamsters;
 
-public enum Status {
+public enum HamsterStatus {
 
     ADOPTABLE("örökbefogadható"),
     ADOPTED ("örökbefogadott"),
@@ -10,7 +10,7 @@ public enum Status {
 
     private String status;
 
-    Status(String status) {
+    HamsterStatus(String status) {
         this.status = status;
     }
 

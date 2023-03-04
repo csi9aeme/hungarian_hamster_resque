@@ -24,9 +24,8 @@ public class Hamster {
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
 
-    private String location;
     @Enumerated(EnumType.STRING)
-    private Status status;
+    private HamsterStatus hamsterStatus;
     private String description;
 
     @Column(name = "with_us_since")
@@ -42,21 +41,20 @@ public class Hamster {
     private LocalDate dateOfAdoption;
 
     public Hamster(){}
-    public Hamster(String name, Species species, String color, LocalDate dateOfBirth, Status status) {
+    public Hamster(String name, Species species, String color, LocalDate dateOfBirth, HamsterStatus hamsterStatus) {
         this.name = name;
         this.species = species;
         this.color = color;
         this.dateOfBirth = dateOfBirth;
-        this.status = status;
+        this.hamsterStatus = hamsterStatus;
     }
 
-    public Hamster(String name, Species species, String color, LocalDate dateOfBirth, String location, Status status, String description, Host host, LocalDate shelterTime) {
+    public Hamster(String name, Species species, String color, LocalDate dateOfBirth, HamsterStatus hamsterStatus, String description, Host host, LocalDate shelterTime) {
         this.name = name;
         this.species = species;
         this.color = color;
         this.dateOfBirth = dateOfBirth;
-        this.location = location;
-        this.status = status;
+        this.hamsterStatus = hamsterStatus;
         this.description = description;
         this.host = host;
         this.shelterTime = shelterTime;
@@ -103,14 +101,6 @@ public class Hamster {
         this.dateOfBirth = dateOfBirth;
     }
 
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation() {
-        this.location = host.getLocation();
-    }
-
     public Host getHost() {
         return host;
     }
@@ -135,12 +125,12 @@ public class Hamster {
         this.adoptive = adoptive;
     }
 
-    public Status getStatus() {
-        return status;
+    public HamsterStatus getStatus() {
+        return hamsterStatus;
     }
 
-    public void setStatus(Status status) {
-        this.status = status;
+    public void setStatus(HamsterStatus hamsterStatus) {
+        this.hamsterStatus = hamsterStatus;
     }
 
     public String getDescription() {

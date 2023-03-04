@@ -1,10 +1,10 @@
 package hosts;
 
 import hamsters.Hamster;
+import hamsters.HamsterStatus;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -28,19 +28,7 @@ public class HostRepository {
         }
     }
 
-    public Host saveHamsterToHost(long hamsterId, long hostId) {
-        EntityManager manager = factory.createEntityManager();
-        try {
-            manager.getTransaction().begin();
-            Hamster hamster = manager.find(Hamster.class, hamsterId);
-            Host host = manager.find(Host.class, hostId);
-            host.addHamsterToHost(hamster);
-            manager.getTransaction().commit();
-            return host;
-        } finally {
-            manager.close();
-        }
-    }
+
 
     public Host findHostById(long hostId) {
         EntityManager manager = factory.createEntityManager();
@@ -50,13 +38,17 @@ public class HostRepository {
             manager.close();
         }
     }
-    public Host findHostByIdWithHamsters(long hostId) {
+
+    public Host updateHostStatus(long hostId, HostStatus status) {
         EntityManager manager = factory.createEntityManager();
         try {
-            return manager.createQuery("select host from Host host left join fetch host.caredHamsters " +
-                    "where host.id = :hostId", Host.class)
-                    .setParameter("hostId", hostId)
-                    .getSingleResult();
+            manager.getTransaction().begin();
+            Host hostForUpdate = manager.find(Host.class, hostId);
+            hostForUpdate.setStatus(status);
+            hostForUpdate.setCapacity(0);
+            manager.getTransaction().commit();
+            return hostForUpdate;
+
         } finally {
             manager.close();
         }
@@ -85,11 +77,29 @@ public class HostRepository {
         }
     }
 
-    public Set<Host> findHostsByLocationWithHamsters(String location) {
+    public Set<Hamster> findHostWithAllHamsters(long hostId) {
         EntityManager manager = factory.createEntityManager();
         try {
-            return manager.createQuery("select host from Host host where host.location like :location", Host.class)
-                    .setParameter("location", "%" + location + "%")
+            return manager.createQuery("select ham from Hamster ham left join fetch ham.host " +
+                            "where ham.host.id = :hostId", Hamster.class)
+                    .setParameter("hostId", hostId)
+                    .getResultStream().collect(Collectors.toSet());
+        } finally {
+            manager.close();
+        }
+    }
+    public Set<Hamster> findHostWithActualHamsters(long hostId) {
+        EntityManager manager = factory.createEntityManager();
+        try {
+            return manager.createQuery("select ham from Hamster ham left join fetch ham.host " +
+                            "where ham.host.id = :hostId " +
+                            "AND ham.hamsterStatus = :adoptable " +
+                            "OR ham.hamsterStatus = :treatment " +
+                            "OR ham.hamsterStatus = :permCared", Hamster.class)
+                    .setParameter("hostId", hostId)
+                    .setParameter("adoptable", HamsterStatus.ADOPTABLE)
+                    .setParameter("treatment", HamsterStatus.UNDER_MEDICAL_TREATMENT)
+                    .setParameter("permCared", HamsterStatus.PERMANENTLY_CARED_FOR)
                     .getResultStream().collect(Collectors.toSet());
         } finally {
             manager.close();

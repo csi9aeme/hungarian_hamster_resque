@@ -17,6 +17,8 @@ public class Host {
     private String name;
 
     private String location;
+    @Enumerated(EnumType.STRING)
+    private HostStatus hostStatus = HostStatus.ACTIVE;
     private int capacity = 1;
 
     @OneToMany(mappedBy = "host", cascade = CascadeType.PERSIST)
@@ -80,5 +82,13 @@ public class Host {
 
     public void setCaredHamsters(Set<Hamster> caredHamsters) {
         this.caredHamsters = caredHamsters;
+    }
+
+    public HostStatus getStatus() {
+        return hostStatus;
+    }
+
+    public void setStatus(HostStatus hostStatus) {
+        this.hostStatus = hostStatus;
     }
 }
